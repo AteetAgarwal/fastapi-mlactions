@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transcript-deployment
+  labels:
+    app: transcript
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: transcript
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: transcript
+    spec:
+      containers:
+      - name: transcript
+        image: webapiaw1devreg01.azurecr.io/webapi-transcript:8.67.7.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 100
+          periodSeconds: 120
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 100
+          periodSeconds: 120
+          successThreshold: 1
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        env:
+          - name: ApiHostEnvironment
+            valueFrom:
+              secretKeyRef:
+                name: api-config-generic-secret
+                key: api-host-env
+          - name: Logging__ApplicationInsights__LogLevel__Default
+            valueFrom:
+              secretKeyRef:
+                name: api-config-generic-secret
+                key: logging-level-Default
+          - name: Logging__ApplicationInsights__LogLevel__Microsoft
+            valueFrom:
+              secretKeyRef:
+                name: api-config-generic-secret
+                key: logging-level-Microsoft
+          - name: ApiKeyAuthentication__IsEnabled
+            valueFrom:
+              secretKeyRef:
+                name: api-config-generic-secret
+                key: api-auth-enabled
+          - name: AZ_KEYVAULT_NAME
+            valueFrom:
+              secretKeyRef:
+                name: az-keyvault-secret
+                key: keyvaultname
+          - name: AZ_KEYVAULT_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: az-keyvault-secret
+                key: clientid
+          - name: AZ_KEYVAULT_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: az-keyvault-secret
+                key: clientsecret
+          - name: AZ_KEYVAULT_TENANT_ID
+            valueFrom:
+              secretKeyRef:
+                name: az-keyvault-secret
+                key: tenantid
